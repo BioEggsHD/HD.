@@ -44,17 +44,19 @@ private:
     Lexer& lexer;
 
     // Parse output statement, e.g., output("Hello, World!")
-    std::unique_ptr<ASTNode> parseOutput() {
-        if (lexer.getNextToken().type == TOKEN_LPAREN) {
-            Token stringToken = lexer.getNextToken();
-            if (stringToken.type == TOKEN_STRING) {
-                if (lexer.getNextToken().type == TOKEN_RPAREN) {
-                    return std::make_unique<OutputNode>(stringToken.value);
-                }
-            }
+    // Parse output statement, e.g., output(var)
+std::unique_ptr<ASTNode> parseOutput() {
+    if (lexer.getNextToken().type == TOKEN_LPAREN) {
+        Token token = lexer.getNextToken();
+        if (token.type == TOKEN_IDENTIFIER) {  // Check if it's a variable (identifier)
+            return std::make_unique<OutputNode>(token.value);  // Store variable name
+        } else if (token.type == TOKEN_STRING) {  // If it's a string literal
+            return std::make_unique<OutputNode>(token.value);  // Store string value
         }
-        return nullptr;
     }
+    return nullptr;
+}
+
 
     // Parse variable assignment, e.g., str myVar = "abc", bool myVar2 = false, int myVar3 = 58
     std::unique_ptr<ASTNode> parseVarAssignment(const Token& typeToken) {
