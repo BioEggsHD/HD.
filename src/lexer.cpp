@@ -1,118 +1,84 @@
-// Add function-related tokens to the token enumeration
-enum TokenType {
-    TOKEN_IDENTIFIER,
-    TOKEN_FUNCTION,
-    TOKEN_INT,
-    TOKEN_STR,
-    TOKEN_BOOL,
-    TOKEN_ASSIGN,
-    TOKEN_STRING,
-    TOKEN_LPAREN,
-    TOKEN_RPAREN,
-    TOKEN_COMMA,
-    TOKEN_COLON,
-    TOKEN_RETURN,
-    TOKEN_PASS,
-    TOKEN_INT_LITERAL,
-    TOKEN_BOOL_LITERAL,
-    TOKEN_EOF,
-    TOKEN_COMMENT,
-    TOKEN_ARGS,
-    TOKEN_TYPE,
-    // More tokens as needed...
+#include <iostream>
+#include <string>
+#include <vector>
+#include <cctype>
+
+enum class TokenType {
+    Keyword, Type, Identifier, Operator, Number, String, Delimiter, EndOfFile, Invalid
 };
 
-// Lexer to handle function definition syntax
+struct Token {
+    TokenType type;
+    std::string value;
+};
+
 class Lexer {
 public:
-    Lexer(const std::string& input) : input(input), index(0) {}
+    Lexer(const std::string &source) : source(source), currentPos(0) {}
 
-    Token getNextToken() {
-        // Skip comments
-        if (input.substr(index, 2) == "**") {
-            while (index < input.size() && input[index] != '\n') {
-                index++;
+    std::vector<Token> tokenize() {
+        std::vector<Token> tokens;
+
+        while (currentPos < source.size()) {
+            char currentChar = source[currentPos];
+
+            if (isspace(currentChar)) {
+                currentPos++;
+                continue;
             }
-            return getNextToken();  // Skip the comment line and get the next token
+
+            if (isalpha(currentChar)) {
+                std::string identifier = readIdentifier();
+                tokens.push_back({TokenType::Identifier, identifier});
+            }
+            else if (isdigit(currentChar)) {
+                std::string number = readNumber();
+                tokens.push_back({TokenType::Number, number});
+            }
+            else if (currentChar == '+') {
+                tokens.push_back({TokenType::Operator, "+"});
+                currentPos++;
+            }
+            else if (currentChar == '-') {
+                tokens.push_back({TokenType::Operator, "-"});
+                currentPos++;
+            }
+            else if (currentChar == '=') {
+                tokens.push_back({TokenType::Operator, "="});
+                currentPos++;
+            }
+            else if (currentChar == '(' || currentChar == ')') {
+                tokens.push_back({TokenType::Delimiter, std::string(1, currentChar)});
+                currentPos++;
+            } 
+            else {
+                tokens.push_back({TokenType::Invalid, std::string(1, currentChar)});
+                currentPos++;
+            }
         }
 
-        // Handle function declaration "function blabla: <int, args: {int num1, int num2}>"
-        if (input.substr(index, 8) == "function") {
-            index += 8;
-            skipWhitespace();
-            return {TOKEN_FUNCTION, "function"};
-        }
-
-        // Handle return type (e.g., <int, args: {int num1, int num2}>)
-        if (input[index] == '<') {
-            index++;
-            skipWhitespace();
-            return {TOKEN_TYPE, "type"}; // Placeholder for handling specific types like int, str, etc.
-        }
-
-        // Handle arguments inside curly braces {int num1, int num2}
-        if (input[index] == '{') {
-            index++;
-            skipWhitespace();
-            return {TOKEN_ARGS, "args"};
-        }
-
-        // Handle function name (identifier)
-        if (isalpha(input[index])) {
-            size_t start = index;
-            while (isalnum(input[index])) index++;
-            return {TOKEN_IDENTIFIER, input.substr(start, index - start)};
-        }
-
-        // Handle literals, operators, etc.
-        if (isdigit(input[index])) {
-            size_t start = index;
-            while (isdigit(input[index])) index++;
-            return {TOKEN_INT_LITERAL, input.substr(start, index - start)};
-        }
-
-        if (input[index] == '(') {
-            index++;
-            return {TOKEN_LPAREN, "("};
-        }
-
-        if (input[index] == ')') {
-            index++;
-            return {TOKEN_RPAREN, ")"};
-        }
-
-        if (input[index] == ':') {
-            index++;
-            return {TOKEN_COLON, ":"};
-        }
-
-        if (input[index] == ',') {
-            index++;
-            return {TOKEN_COMMA, ","};
-        }
-
-        if (input.substr(index, 4) == "pass") {
-            index += 4;
-            skipWhitespace();
-            return {TOKEN_PASS, "pass"};
-        }
-
-        if (input[index] == '\0') {
-            return {TOKEN_EOF, ""}; // End of input
-        }
-
-        // Skip any unrecognized characters for now
-        index++;
-        return getNextToken();
+        tokens.push_back({TokenType::EndOfFile, ""});
+        return tokens;
     }
 
 private:
-    std::string input;
-    size_t index;
+    std::string source;
+    size_t currentPos;
 
-    void skipWhitespace() {
-        while (index < input.size() && isspace(input[index])) {
-            index++;
+    std::string readIdentifier() {
+        size_t startPos = currentPos;
+        while (currentPos < source.size() && isalnum(source[currentPos])) {
+            currentPos++;
         }
+        return source.substr(startPos, currentPos - startPos);
+    }
+
+    std::string readNumber() {
+        size_t startPos = currentPos;
+        while (currentPos < source.size() && isdigit(source[currentPos])) {
+            currentPos++;
+        }
+        return source.substr(startPos, currentPos - startPos);
     }
 };
+
