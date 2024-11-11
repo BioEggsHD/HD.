@@ -1,8 +1,4 @@
-#include <string>
-#include <vector>
-#include <cctype>
-#include <iostream>
-
+// Add function-related tokens to the token enumeration
 enum TokenType {
     TOKEN_IDENTIFIER,
     TOKEN_FUNCTION,
@@ -26,112 +22,97 @@ enum TokenType {
     // More tokens as needed...
 };
 
-struct Token {
-    TokenType type;
-    std::string value;
-};
-
+// Lexer to handle function definition syntax
 class Lexer {
 public:
-    Lexer(const std::string& input) : input(input), pos(0) {}
+    Lexer(const std::string& input) : input(input), index(0) {}
 
     Token getNextToken() {
-        while (pos < input.size()) {
-            if (isspace(input[pos])) {
-                pos++;
-                continue;
+        // Skip comments
+        if (input.substr(index, 2) == "**") {
+            while (index < input.size() && input[index] != '\n') {
+                index++;
             }
-
-            // Keywords: output, str, bool, int
-            if (input.substr(pos, 6) == "output" && isDelimiter(pos + 6)) {
-                pos += 6;
-                return Token{TOKEN_OUTPUT, "output"};
-            }
-            if (input.substr(pos, 3) == "str" && isDelimiter(pos + 3)) {
-                pos += 3;
-                return Token{TOKEN_STR, "str"};
-            }
-            if (input.substr(pos, 4) == "bool" && isDelimiter(pos + 4)) {
-                pos += 4;
-                return Token{TOKEN_BOOL, "bool"};
-            }
-            if (input.substr(pos, 3) == "int" && isDelimiter(pos + 3)) {
-                pos += 3;
-                return Token{TOKEN_INT, "int"};
-            }
-
-            // Boolean literals: true, false
-            if (input.substr(pos, 4) == "true" && isDelimiter(pos + 4)) {
-                pos += 4;
-                return Token{TOKEN_BOOL_LITERAL, "true"};
-            }
-            if (input.substr(pos, 5) == "false" && isDelimiter(pos + 5)) {
-                pos += 5;
-                return Token{TOKEN_BOOL_LITERAL, "false"};
-            }
-
-            // Symbols: (, ), =
-            if (input[pos] == '(') {
-                pos++;
-                return Token{TOKEN_LPAREN, "("};
-            }
-            if (input[pos] == ')') {
-                pos++;
-                return Token{TOKEN_RPAREN, ")"};
-            }
-            if (input[pos] == '=') {
-                pos++;
-                return Token{TOKEN_ASSIGN, "="};
-            }
-
-            // String literals: "text here"
-            if (input[pos] == '"') {
-                return getStringLiteral();
-            }
-
-            // Identifiers (variables) or integers
-            if (isalpha(input[pos])) {
-                return getIdentifier();
-            }
-            if (isdigit(input[pos])) {
-                return getIntLiteral();
-            }
+            return getNextToken();  // Skip the comment line and get the next token
         }
-        return Token{TOKEN_EOF, ""};
+
+        // Handle function declaration "function blabla: <int, args: {int num1, int num2}>"
+        if (input.substr(index, 8) == "function") {
+            index += 8;
+            skipWhitespace();
+            return {TOKEN_FUNCTION, "function"};
+        }
+
+        // Handle return type (e.g., <int, args: {int num1, int num2}>)
+        if (input[index] == '<') {
+            index++;
+            skipWhitespace();
+            return {TOKEN_TYPE, "type"}; // Placeholder for handling specific types like int, str, etc.
+        }
+
+        // Handle arguments inside curly braces {int num1, int num2}
+        if (input[index] == '{') {
+            index++;
+            skipWhitespace();
+            return {TOKEN_ARGS, "args"};
+        }
+
+        // Handle function name (identifier)
+        if (isalpha(input[index])) {
+            size_t start = index;
+            while (isalnum(input[index])) index++;
+            return {TOKEN_IDENTIFIER, input.substr(start, index - start)};
+        }
+
+        // Handle literals, operators, etc.
+        if (isdigit(input[index])) {
+            size_t start = index;
+            while (isdigit(input[index])) index++;
+            return {TOKEN_INT_LITERAL, input.substr(start, index - start)};
+        }
+
+        if (input[index] == '(') {
+            index++;
+            return {TOKEN_LPAREN, "("};
+        }
+
+        if (input[index] == ')') {
+            index++;
+            return {TOKEN_RPAREN, ")"};
+        }
+
+        if (input[index] == ':') {
+            index++;
+            return {TOKEN_COLON, ":"};
+        }
+
+        if (input[index] == ',') {
+            index++;
+            return {TOKEN_COMMA, ","};
+        }
+
+        if (input.substr(index, 4) == "pass") {
+            index += 4;
+            skipWhitespace();
+            return {TOKEN_PASS, "pass"};
+        }
+
+        if (input[index] == '\0') {
+            return {TOKEN_EOF, ""}; // End of input
+        }
+
+        // Skip any unrecognized characters for now
+        index++;
+        return getNextToken();
     }
 
 private:
-    // Helper to check if the next character is a delimiter (non-alphanumeric or end of input)
-    bool isDelimiter(size_t nextPos) {
-        return nextPos >= input.size() || !isalnum(input[nextPos]);
-    }
-
-    Token getStringLiteral() {
-        pos++; // Skip the opening quote
-        std::string str;
-        while (pos < input.size() && input[pos] != '"') {
-            str += input[pos++];
-        }
-        pos++; // Skip the closing quote
-        return Token{TOKEN_STRING, str};
-    }
-
-    Token getIdentifier() {
-        std::string identifier;
-        while (pos < input.size() && (isalnum(input[pos]) || input[pos] == '_')) {
-            identifier += input[pos++];
-        }
-        return Token{TOKEN_IDENTIFIER, identifier};
-    }
-
-    Token getIntLiteral() {
-        std::string number;
-        while (pos < input.size() && isdigit(input[pos])) {
-            number += input[pos++];
-        }
-        return Token{TOKEN_INT_LITERAL, number};
-    }
-
     std::string input;
-    size_t pos;
+    size_t index;
+
+    void skipWhitespace() {
+        while (index < input.size() && isspace(input[index])) {
+            index++;
+        }
+    }
 };
