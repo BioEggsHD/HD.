@@ -36,8 +36,16 @@ private:
 
     // Execute an output statement
     void executeOutput(OutputNode* outputNode) {
+    // If it's a variable, resolve it from the symbol table
+    if (symbolTable.find(outputNode->message) != symbolTable.end()) {
+        // Retrieve the value from the symbol table
+        std::visit([](const auto& val) { std::cout << val << std::endl; }, symbolTable[outputNode->message]);
+    } else {
+        // Otherwise, treat it as a string literal and print it
         std::cout << outputNode->message << std::endl;
     }
+}
+
 
     // Execute a variable assignment, storing the variable in the symbol table
     void executeVarAssignment(VarAssignNode* varAssignNode) {
