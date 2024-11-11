@@ -4,18 +4,26 @@
 #include <iostream>
 
 enum TokenType {
-    TOKEN_OUTPUT,      // "output"
-    TOKEN_STR,         // "str"
-    TOKEN_BOOL,        // "bool"
-    TOKEN_INT,         // "int"
-    TOKEN_IDENTIFIER,  // Variable names
-    TOKEN_STRING,      // String literals
-    TOKEN_ASSIGN,      // "="
-    TOKEN_LPAREN,      // "("
-    TOKEN_RPAREN,      // ")"
-    TOKEN_BOOL_LITERAL,// "true" or "false"
-    TOKEN_INT_LITERAL, // Integer literals (e.g., 58)
-    TOKEN_EOF          // End of file/input
+    TOKEN_IDENTIFIER,
+    TOKEN_FUNCTION,
+    TOKEN_INT,
+    TOKEN_STR,
+    TOKEN_BOOL,
+    TOKEN_ASSIGN,
+    TOKEN_STRING,
+    TOKEN_LPAREN,
+    TOKEN_RPAREN,
+    TOKEN_COMMA,
+    TOKEN_COLON,
+    TOKEN_RETURN,
+    TOKEN_PASS,
+    TOKEN_INT_LITERAL,
+    TOKEN_BOOL_LITERAL,
+    TOKEN_EOF,
+    TOKEN_COMMENT,
+    TOKEN_ARGS,
+    TOKEN_TYPE,
+    // More tokens as needed...
 };
 
 struct Token {
