@@ -1,26 +1,28 @@
 #include <iostream>
 #include <fstream>
-#include <string>
+#include <sstream>
 #include "lexer.cpp"
 #include "parser.cpp"
 #include "interpreter.cpp"
 
 int main() {
-    // Read the HD-Script source code
-    std::ifstream file("example.hds");
-    std::string code((std::istreambuf_iterator<char>(file)), std::istreambuf_iterator<char>());
+    // Example HD-Script code as a string
+    std::string code = R"(
+        output("Hello, World!")
+        output(42)
+    )";
 
-    // Create lexer to tokenize the input code
+    // Initialize lexer and tokenize the code
     Lexer lexer(code);
     std::vector<Token> tokens = lexer.tokenize();
 
-    // Parse the tokens
+    // Initialize parser and parse the tokens
     Parser parser(tokens);
     parser.parse();
 
-    // Interpret and execute the code
-    Interpreter interpreter;
-    interpreter.execute(tokens);
+    // Initialize interpreter and interpret the parsed tokens
+    Interpreter interpreter(tokens);
+    interpreter.interpret();
 
     return 0;
 }
